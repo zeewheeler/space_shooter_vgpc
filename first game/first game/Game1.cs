@@ -120,7 +120,7 @@ namespace first_game
                 projectile_array[i].position.Y = -10000;
 
                 projectile_array[i].velocity.Y = 0;
-                projectile_array[i].velocity.X = 5;
+                projectile_array[i].velocity.X = 15;
                 projectile_array[i].is_alive = false;
             }
 
@@ -186,6 +186,12 @@ namespace first_game
                     }
                 }
             }
+
+            for (int i = 0; i < max_projectiles; i++)
+            {
+                projectile_array[i].position.X += projectile_array[i].velocity.X;
+                projectile_array[i].position.Y += projectile_array[i].velocity.Y;
+            }
         }
 
         public void spawn_enemy_ship()
@@ -234,24 +240,10 @@ namespace first_game
             }
         }
 
-        /// <summary>
-        /// UnloadContent will be called once per game and is the place to unload
-        /// all content.
-        /// </summary>
-        protected override void UnloadContent()
-        {
-            // TODO: Unload any non ContentManager content here
-        }
-
-        /// <summary>
-        /// Allows the game to run logic such as updating the world,
-        /// checking for collisions, gathering input, and playing audio.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
-        protected override void Update(GameTime gameTime)
+        public void handle_input()
         {
             KeyboardState keyboardstate = Keyboard.GetState();
-            
+
             //exit game if  escape key is down
             if (keyboardstate.IsKeyDown(Keys.Escape))
             {
@@ -260,22 +252,34 @@ namespace first_game
 
             if (keyboardstate.IsKeyDown(Keys.Up))
             {
-                player_ship_position.Y -= 10;
+                if (player_ship_position.Y - 5 > viewportRect.Top)
+                {
+                    player_ship_position.Y -= 10;
+                }
             }
 
             if (keyboardstate.IsKeyDown(Keys.Down))
             {
-                player_ship_position.Y += 10;
+                if (player_ship_position.Y + 5 < (viewportRect.Bottom - player_ship_texture.Height ))
+                {
+                    player_ship_position.Y += 10;
+                }
             }
 
             if (keyboardstate.IsKeyDown(Keys.Left))
             {
-                player_ship_position.X -= 10;
+                if (player_ship_position.X - 5 > 0)
+                {
+                    player_ship_position.X -= 10;
+                }
             }
 
             if (keyboardstate.IsKeyDown(Keys.Right))
             {
-                player_ship_position.X += 10;
+                if (player_ship_position.X + 5 < viewportRect.Right - player_ship_texture.Width)
+                {
+                    player_ship_position.X += 10;
+                }
             }
 
             if (keyboardstate.IsKeyDown(Keys.Enter))
@@ -286,14 +290,14 @@ namespace first_game
 
 
             if (keyboardstate.IsKeyDown(Keys.Space) &&
-                previousKeyboardState.IsKeyUp(Keys.Space) )
+                previousKeyboardState.IsKeyUp(Keys.Space))
             {
                 for (int i = 0; i < max_projectiles; i++)
                 {
                     if (!projectile_array[i].is_alive)
                     {
-                        projectile_array[i].position.X = player_ship_position.X;
-                        projectile_array[i].position.Y = player_ship_position.Y;
+                        projectile_array[i].position.X = player_ship_position.X + (player_ship_texture.Width);
+                        projectile_array[i].position.Y = player_ship_position.Y +(0.5f * player_ship_texture.Height);
                         projectile_array[i].is_alive = true;
                         fire_laser_sound.Play();
                         break;
@@ -301,22 +305,11 @@ namespace first_game
                 }
             }
 
+            previousKeyboardState = keyboardstate;
+        }
 
-
-
-            //Update projectiles
-
-            for (int i = 0; i < max_projectiles; i++)
-            {
-                projectile_array[i].position.X += projectile_array[i].velocity.X;
-                projectile_array[i].position.Y += projectile_array[i].velocity.Y;
-            }
-
-            //call projectile collision detection function
-            Update_player_projectiles();
-
-            //update enemy ship
-
+        public void update_enemy_ship()
+        {
             for (int i = 0; i < max_enemy_ships; i++)
             {
                 enemy_ship_array[i].position.X += enemy_ship_array[i].velocity.X;
@@ -328,22 +321,34 @@ namespace first_game
                     enemy_ship_array[i].is_alive = false;
                 }
             }
+        }
+        
+        protected override void UnloadContent()
+        {
+            // TODO: Unload any non ContentManager content here
+        }
 
+       
+        /// Allows the game to run logic such as updating the world,
+        /// checking for collisions, gathering input, and playing audio.
+       
+        protected override void Update(GameTime gameTime)
+        {
+            //Update projectiles
+            Update_player_projectiles();
+
+            //scan and act upon keyboard input
+            handle_input();
+
+            //update enemy ship
+            update_enemy_ship();
+         
             //call our custom spawn enemy function, it will keep max_enemies_on_screen worth of enemies on the screen
             spawn_enemy_ship();
+         
             //update the current number of enemyes on the screen using our custom function
             update_enemy_ship_count();
-         
-
-            
-
-
-            previousKeyboardState = keyboardstate;
-
-            
-
-            // TODO: Add your update logic here
-
+      
             base.Update(gameTime);
         }
 
